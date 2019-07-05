@@ -16,7 +16,7 @@
 
 ### 基本设计方案
 
-![avatar](/Users/tangjialiang/Desktop/note/Note_LargeScale_Distributed_System/imgs/vm_architecture.jpg)
+![avatar](./imgs/vm_architecture.jpg)
 
 如上图就是本文提到的容错系统的架构，一个Primary，一个Backup，Primary 和 Backup 之间通过 Logging Channel 进行通信， Primary 和 Backup 基本保持同步，Backup 稍稍落后，它们两个之间会通过 heartbeat 进行 fail 检测，并且它们使用共享磁盘(Shared Disk)。
 
@@ -44,7 +44,7 @@ FT协议是应用于 Logging Channel 的协议，协议的基本要求为：
 
 流程图如图所示：
 
-![avatar](/Users/tangjialiang/Desktop/note/Note_LargeScale_Distributed_System/imgs/example_primary_postpone.jpg)
+![avatar](./imgs/example_primary_postpone.jpg)
 
 但是这种方法不能保证 output 只发出一次，如果 primary 宕机了，backup 不能判断它是在发送了 output 之前还是之后宕机的，因此 backup 会再发送一次 output。但是这个问题很容易解决，因为：
 
