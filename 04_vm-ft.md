@@ -29,8 +29,7 @@
 + 虚拟机管理程序（Hypervision）能够记录所有在虚拟机上的操作，所以能够记录主服务器（Primary）所有的操作，然后在服务器（Backup）上进行演绎. 
 
 ### 基本设计方案
-
-![avatar](./imgs/vm_architecture.jpg)
+ <div align="center">![avatar](./imgs/vm_architecture.jpg)</div>
 
 如上图就是本文提到的容错系统的架构，一个Primary，一个Backup，Primary 和 Backup 之间通过 Logging Channel 进行通信， Primary 和 Backup 基本保持同步，Backup 稍稍落后，它们两个之间会通过 heartbeat 进行 fail 检测，并且它们使用共享磁盘(Shared Disk)。
 
@@ -58,7 +57,7 @@ FT协议是应用于 Logging Channel 的协议，协议的基本要求为：
 
 流程图如图所示：
 
-![avatar](./imgs/example_primary_postpone.jpg)
+ <div align="center">![avatar](./imgs/example_primary_postpone.jpg)</div>
 
 但是这种方法不能保证 output 只发出一次，如果 primary 宕机了，backup 不能判断它是在发送了 output 之前还是之后宕机的，因此 backup 会再发送一次 output。但是这个问题很容易解决，因为：
 
@@ -85,7 +84,8 @@ VMware Vmotion 操作能够将一台 VM 从一个 Server 完整的迁移到另�
 
 #### 管理 Logging Channel
 
-![avatar](./imgs/4858d6a8ly1ffruxtx8wzj20ez0chwfd.jpg)
+ <div align="center">
+![avatar](./imgs/4858d6a8ly1ffruxtx8wzj20ez0chwfd.jpg)</div>
 
 如图，该设计使用了一个大的 buffer，来保存 logging entries，Primary 把自己的 entry 存到 buffer 中，由 logging channel 发送给Backup 的 buffer，然后 Backup 从 buffer 读取命令执行。
 
