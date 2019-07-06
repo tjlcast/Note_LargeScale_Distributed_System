@@ -1,7 +1,21 @@
 
 # 容错虚拟机分布式系统的设计
 
-[toc]
+<!-- MarkdownTOC indent="\t" autolink="true" -->
+
+- [基本设计方案](#%E5%9F%BA%E6%9C%AC%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%A1%88)
+- [确定（deterministic）操作的演绎](#%E7%A1%AE%E5%AE%9A%EF%BC%88deterministic%EF%BC%89%E6%93%8D%E4%BD%9C%E7%9A%84%E6%BC%94%E7%BB%8E)
+- [FT（Fault-Tolerance）协议](#ft%EF%BC%88fault-tolerance%EF%BC%89%E5%8D%8F%E8%AE%AE)
+- [宕机检测](#%E5%AE%95%E6%9C%BA%E6%A3%80%E6%B5%8B)
+- [具体实现](#%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0)
+	- [启动/重启 Virtual Machine](#%E5%90%AF%E5%8A%A8%E9%87%8D%E5%90%AF-virtual-machine)
+	- [管理 Logging Channel](#%E7%AE%A1%E7%90%86-logging-channel)
+	- [Disk I/O问题](#disk-io%E9%97%AE%E9%A2%98)
+- [Summary](#summary)
+
+<!-- /MarkdownTOC -->
+
+----
 
 在分布式系统中，容错方法有很多种，常见的传统方法有： 
 
@@ -87,6 +101,10 @@ VMware Vmotion 操作能够将一台 VM 从一个 Server 完整的迁移到另�
 
 	- 解决方案：对 disk 操作的内存设置内存的页保护，但是这种方法代价太高；该设计中使用了 bounce buffer，它的大小和 disk 所操作的内存部分大小是一致的，read 操作直接将内容读入 buffer，当其他操作完成，写入内存，write 操作将写内容写入 buffer，之后再写入磁盘。
 
+----
+
 ### Summary
 
 Vmware 提出的这种 Primary/Backup 方法是分布式容错方法中非常重要的一部分，可以用在许多系统中，不仅仅是分布式存储（GFS 的容错方法），也可以用在分布式计算中，因为它是将所有的操作都记录下来，将它们重新在 Backup 上进行演绎，从而起到了备份的作用，能够做到容错（Fault-Tolerance）。
+
+----
