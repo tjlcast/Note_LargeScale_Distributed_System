@@ -18,15 +18,16 @@
 - [一致性模型](#%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B)
 - [系统间的交互](#%E7%B3%BB%E7%BB%9F%E9%97%B4%E7%9A%84%E4%BA%A4%E4%BA%92)
 - [Master 职责](#master-%E8%81%8C%E8%B4%A3)
-	- [管理理 namespace](#%E7%AE%A1%E7%90%86%E7%90%86-namespace)
-	- [放置 replicas](#%E6%94%BE%E7%BD%AE-replicas)
-	- [垃圾回收](#%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6)
-	- [过期 replica 检测](#%E8%BF%87%E6%9C%9F-replica-%E6%A3%80%E6%B5%8B)
+    - [管理理 namespace](#%E7%AE%A1%E7%90%86%E7%90%86-namespace)
+    - [放置 replicas](#%E6%94%BE%E7%BD%AE-replicas)
+    - [垃圾回收](#%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6)
+    - [过期 replica 检测](#%E8%BF%87%E6%9C%9F-replica-%E6%A3%80%E6%B5%8B)
 
 <!-- /MarkdownTOC -->
 
 ----
 
+<a id="%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F"></a>
 ### 分布式系统
 
 Some conceptions of distrubted system. 
@@ -54,11 +55,13 @@ Some conceptions of distrubted system.
 GFS 不是采用的理想化一致性模型，但是它解决了机器崩溃恢复的问题以及能够应对高并发操作同时又能相对高效地利用网络。
 
 ----
+<a id="gfs%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"></a>
 ### GFS是什么？ 
 
 GFS（Google File System ）是一个大规模分布式文件系统，具有容错的特性（机器崩溃后的处理），并且具有较高性能，能够响应众多的客户端。
 
 ----
+<a id="gfs-%E8%AE%BE%E8%AE%A1%E8%83%8C%E6%99%AF"></a>
 ### GFS 设计背景
 - 经常会有机器崩溃（因为机器众多，难免会有机器崩溃）
 - 有些存储的文件比较大
@@ -67,16 +70,16 @@ GFS（Google File System ）是一个大规模分布式文件系统，具有容�
 - 需要支持并发（例如，多个客户端同时进行 append 操作）
 
 ----
+<a id="gfs-%E6%89%80%E9%9C%80%E6%8F%90%E4%BE%9B%E6%93%8D%E4%BD%9C"></a>
 ### GFS 所需提供操作
 
 create（文件创建）、delete（文件删除）、open（打开文件）、close（关闭文件）、read（读取文件）、write（写入文件）、record append（追加文件）、snapshot（快照）。
 
 ----
+<a id="gfs-%E6%9E%B6%E6%9E%84"></a>
 ### GFS 架构
 
- <div align="center">
- 	![gfs architecture](./imgs/1089769-20180501090649479-435901512.png)
-</div>
+ <div align="center">![gfs architecture](./imgs/1089769-20180501090649479-435901512.png)</div>
 GFS 的架构由一台 master 服务器和许多台文件服务器（chunkserver）构成，并且有若干客户端（client）与之交互。
 
 一份文件被分为多个固定大小的chunk（默认64M），每个chunk有全局唯一的文件句柄 －－ 一个64位的chunk ID，每一份chunk会被复制到多个chunkserver（默认值是3)，以此保证可用性与可靠性。chunkserver将chunk当做普通的Linux文件存储在本地磁盘上。
@@ -87,6 +90,7 @@ GFS 的架构由一台 master 服务器和许多台文件服务器（chunkserver
 　　GFS client是给应用使用的API，这些API接口与POSIX API类似。GFS Client会缓存从GFS master读取的chunk信息（即元数据），尽量减少与GFS master的交互。
 
 ----
+<a id="gfs-%E7%89%B9%E7%82%B9%E6%A6%82%E8%BF%B0"></a>
 ### GFS 特点概述
 
 - 文件分块（chunks），每块有一个64位标识符（chunk handle），它是在 chunk 被创建时由 master 分配的，每一个 chunk 会有3个备份，分别在不同的机器上。
@@ -96,6 +100,7 @@ GFS 的架构由一台 master 服务器和许多台文件服务器（chunkserver
 - client 与 chunkserver 都不会缓存文件数据，为的是防止数据出现不一致的状况。但是 client 会缓存 metadata 的信息（但是会出现一个问题，如果 metadata 过期怎么办呢？GFS 给出了自己的解决方案，也就是租约 lease）
 
 ----
+<a id="%E5%8D%95%E4%B8%80-master-%E6%9E%B6%E6%9E%84"></a>
 ### 单一 Master 架构
 
 GFS 为了简化设计，在整个系统中只有一个 master 进行管理。Master 不提供读写操作，它只会告诉 client，它所请求操作的文件在哪个 chunkserver 上，然后 client 会根据 master 提供的信息，与对应的 chunkserver 进行通信。
@@ -110,6 +115,7 @@ client 向三个备份之一的 chunkserver 发送读请求（选择最近的机
 
 
 ----
+<a id="chunk-%E5%A4%A7%E5%B0%8F"></a>
 ### chunk 大小
 
 GFS 中将 chunk 的大小定为 64MB，它比一般的文件系统的块大小要大。
@@ -126,6 +132,7 @@ GFS 中将 chunk 的大小定为 64MB，它比一般的文件系统的块大小�
 - 在批处理系统中存在很大问题（如果在一个 chunk 上有一个可执行文件，同时有许多 client 都要请求执行这个文件，它的压力会很大。解决方案是把该文件在不同的 chunkserver 上多添加几个备份，更长久的方案是应该允许 client 去读取其他 client 的文件）
 
 ----
+<a id="metadata"></a>
 ### metadata
 
 GFS 的 metadata 存储着 3 种类型的信息：
@@ -142,11 +149,13 @@ Metadata 通常存储于内存中，前两种信息有时会存于磁盘中，�
 实际上不会的，因为每一条 metadata 的大小非常小，namespace 信息也很小，并且使用了前缀压缩（prefix compression）进行存储。并且升级内存的花费实际上也很小。
 
 ----
+<a id="chunk-%E4%BD%8D%E7%BD%AE"></a>
 ### chunk 位置
 
 chunk 的位置信息在 master 中不是一成不变的，master 会通过定期的 heartbeat 进行更新，这样做能够减小开销，这样做就不用 master 与 chunkserver 时刻保持同步通信（包括 chunkserver 的加入、退出、改名、宕机、重启等）。chunkserver 上有一个 final word，它表示了哪个 chunk 在它的磁盘上，哪个 chunk 不在。
 
 ----
+<a id="%E6%93%8D%E4%BD%9C%E8%AE%B0%E5%BD%95%EF%BC%88operation-log%EF%BC%89"></a>
 ### 操作记录（operation log）
 
 operation log 中包括了 metadata 变更的历史记录
@@ -156,6 +165,7 @@ operation log 中包括了 metadata 变更的历史记录
 - 用于 Master 恢复
 
 ----
+<a id="%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B"></a>
 ### 一致性模型
 
 GFS 采用的一致性模型并不是强一致性模型，这是在考虑了各种问题后权衡的结果。
@@ -187,6 +197,7 @@ GFS 采用的一致性模型并不是强一致性模型，这是在考虑了各�
 -GFS 会通过校验和（checksuming）来检测文件的完整性
 
 ----
+<a id="%E7%B3%BB%E7%BB%9F%E9%97%B4%E7%9A%84%E4%BA%A4%E4%BA%92"></a>
 ###系统间的交互
 
 讨论系统中各个部分之间的交互（master 和 chunkserver、client 和 master、chunkserver 等），GFS 设计的目标是尽可能地让 master 更少的涉及到各种操作中。
@@ -213,6 +224,7 @@ GFS 使用租约机制（lease）来保障 mutation 的一致性：**多个备�
 - 但是如果像上述这么做会出现 undefined 但是 consistent 的区域，这是为什么呢？GFS 的 record append 操作仅能保证数据在一个原子单位中被写了一次，并不能保证对所有的 replicas 操作的位置都是相同的，比如每次写入的 offset 相同，但是 chunk 有可能不一样
 
 ----
+<a id="master-%E8%81%8C%E8%B4%A3"></a>
 ### Master 职责
 
 - 执行所有有关于 namespace 的操作
@@ -223,6 +235,7 @@ GFS 使用租约机制（lease）来保障 mutation 的一致性：**多个备�
 	- 负载均衡
 	- 回收闲置空间
 
+<a id="%E7%AE%A1%E7%90%86%E7%90%86-namespace"></a>
 #### 管理理 namespace
 
 在进行快照操作时，lease 会被废除，无法进行写操作，但是 GFS 希望其他 Master 操作不受影响，GFS 采取的方法是使用namespace 锁。
@@ -235,6 +248,7 @@ GFS 的namespace 是一个查找表（lookup table），并且采用了前缀压
 
 快照操作获得了/home, /save 的读锁和/home/user, /save/user 的写锁。创建/home/user/foo需要/home, /home/user的读锁和/home/user/foo 的写锁。因为两个操作在 /home/user的锁上产生了冲突，所以操作会依次执行，在完成 snapshot 操作之后，释放了/home/user 的写锁， /home/user/foo才会被创建。
 
+<a id="%E6%94%BE%E7%BD%AE-replicas"></a>
 #### 放置 replicas
 
 如何安置replicas 的目标是：
@@ -271,6 +285,7 @@ GFS 的namespace 是一个查找表（lookup table），并且采用了前缀压
 
 当 master 决定了备份哪个之后，会把当前可用的 chunk 直接克隆到目标位置（遵循replicas 放置规则）
 
+<a id="%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"></a>
 #### 垃圾回收
 
 文件 delete 之后，GFS 并不会立即对空间进行回收，而是等待垃圾回收机制会空间进行释放。
@@ -279,6 +294,7 @@ GFS 的namespace 是一个查找表（lookup table），并且采用了前缀压
 
 除此之外，垃圾回收机制还会扫描孤儿 chunk（所有的文件都没有用到的非空 chunk），然后对这块 chunk 的 metadata 进行清除。具体的做法是，在 master 于 chunkserver 的 heartbeat 信息中会携带关于 chunk 的信息，master 会把 metadata 中不存在的 chunk 发送给 chunkserver，chunkserver 会把它拥有的 chunk 发送给 master。
 
+<a id="%E8%BF%87%E6%9C%9F-replica-%E6%A3%80%E6%B5%8B"></a>
 #### 过期 replica 检测
 
 chunkserver 宕机或者是 mutation 的丢失会导致 replica 的过期，GFS 是如何对 replicas 进行检测，判断它们是否是最新的呢？
