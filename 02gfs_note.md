@@ -79,7 +79,8 @@ create（文件创建）、delete（文件删除）、open（打开文件）、c
 <a id="gfs-%E6%9E%B6%E6%9E%84"></a>
 ### GFS 架构
 
- <div align="center">![gfs architecture](./imgs/1089769-20180501090649479-435901512.png)</div>
+![gfs architecture](./imgs/1089769-20180501090649479-435901512.png)
+
 GFS 的架构由一台 master 服务器和许多台文件服务器（chunkserver）构成，并且有若干客户端（client）与之交互。
 
 一份文件被分为多个固定大小的chunk（默认64M），每个chunk有全局唯一的文件句柄 －－ 一个64位的chunk ID，每一份chunk会被复制到多个chunkserver（默认值是3)，以此保证可用性与可靠性。chunkserver将chunk当做普通的Linux文件存储在本地磁盘上。
